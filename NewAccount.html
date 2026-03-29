@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add New RD Account</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  background: #f4f6fb;
+  padding: 20px;
+}
+
+
+.form-container {
+  max-width: 700px;
+  margin: auto;
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #1d2671;
+}
+
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 15px;
+}
+
+
+label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  outline: none;
+  font-size: 14px;
+}
+
+
+button {
+  margin-top: 20px;
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #1d2671, #c33764);
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+</style>
+</head>
+
+<body>
+
+<div class="form-container">
+  <h2>➕ Add New RD Account</h2>
+
+  <div class="form-grid">
+
+    <div>
+      <label>Customer ID</label>
+      <input type="text" id="customerId">
+    </div>
+
+    <div>
+      <label>Name</label>
+      <input type="text" id="name">
+    </div>
+
+    <div>
+      <label>Address</label>
+      <input type="text" id="address">
+    </div>
+
+    <div>
+      <label>Mobile No</label>
+      <input type="text" id="mobile">
+    </div>
+
+    <div>
+      <label>Aadhar No</label>
+      <input type="text" id="aadhar">
+    </div>
+
+    <div>
+      <label>Account No</label>
+      <input type="text" id="accountNo">
+    </div>
+
+    <div>
+      <label>Agent ID</label>
+      <input type="text" id="agentId">
+    </div>
+
+    <div>
+      <label>Monthly Deposit Amount (₹)</label>
+      <input type="number" id="monthlyAmount" oninput="calculateMaturity()">
+    </div>
+
+    <div>
+      <label>Duration (Months)</label>
+      <input type="number" id="duration" oninput="calculateMaturity()">
+    </div>
+
+    <div>
+      <label>Start Date</label>
+      <input type="date" id="startDate" onchange="calculateMaturity()">
+    </div>
+
+    <div>
+      <label>Maturity Date</label>
+      <input type="date" id="maturityDate" readonly>
+    </div>
+
+    <div>
+      <label>Maturity Amount (₹)</label>
+      <input type="number" id="maturityAmount" readonly>
+    </div>
+
+  </div>
+
+  <button onclick="saveAccount()">Save Account</button>
+  <button onclick="window.location.href = 'dashboard.html'">Back</button>
+
+</div>
+
+<script>
+function calculateMaturity() {
+  const monthly = parseFloat(document.getElementById("monthlyAmount").value) || 0;
+  const duration = parseInt(document.getElementById("duration").value) || 0;
+  const startDate = document.getElementById("startDate").value;
+
+  // Calculate Maturity Amount (Simple formula, demo)
+  const maturityAmount = monthly * duration * 1.2; // 20% interest demo
+  document.getElementById("maturityAmount").value = maturityAmount.toFixed(2);
+
+  // Calculate Maturity Date
+  if (startDate && duration > 0) {
+    let date = new Date(startDate);
+    date.setMonth(date.getMonth() + duration);
+    document.getElementById("maturityDate").value = date.toISOString().split("T")[0];
+  }
+}
+
+function saveAccount() {
+  alert("RD Account Saved Successfully! (Demo)");
+ 
+}
+</script>
+
+</body>
+</html>
