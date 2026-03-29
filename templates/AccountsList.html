@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>All RD Accounts</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  background: #f4f6fb;
+  padding: 30px;
+}
+
+.container {
+  max-width: 1000px;
+  margin: auto;
+  background: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #1d2671;
+}
+
+.toolbar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.toolbar input {
+  flex: 1;
+  min-width: 220px;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #fff;
+  background: #0072ff;
+}
+
+.secondary-btn {
+  background: #4a5568;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table th, table td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+  font-size: 14px;
+}
+
+table th {
+  background: #1d2671;
+  color: #fff;
+}
+
+#statusMsg {
+  margin-top: 12px;
+  font-weight: 600;
+  color: #1d2671;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h2>📋 All RD Accounts</h2>
+
+  <div class="toolbar">
+    <input type="text" id="searchInput" placeholder="Search by Account No / Customer ID / Name">
+    <button onclick="loadAccounts()">Search</button>
+    <button class="secondary-btn" onclick="goToDashboard()">Back to Dashboard</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Account No</th>
+        <th>Customer ID</th>
+        <th>Name</th>
+        <th>Mobile</th>
+        <th>Monthly Amount</th>
+        <th>Duration</th>
+      </tr>
+    </thead>
+    <tbody id="accountsTableBody">
+      <tr>
+        <td colspan="6">No Accounts Found</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div id="statusMsg"></div>
+</div>
+
+<script>
+const DASHBOARD_ROUTE = "{{ url_for('dashboard') }}";
+
+function goToDashboard() {
+  window.location.href = DASHBOARD_ROUTE;
+}
+
+function setStatus(message, isError) {
+  const status = document.getElementById("statusMsg");
+  status.style.color = isError ? "#d64545" : "#1d2671";
+  status.textContent = message;
+}
+
+function renderAccounts(accounts) {
+  const tableBody = document.getElementById("accountsTableBody");
+  if (!accounts.length) {
+    tableBody.innerHTML = '<tr><td colspan="6">No Accounts Found</td></tr>';
+    return;
+  }
+
+  tableBody.innerHTML = accounts.map((item) => `
+    <tr>
+      <td>${item.accountNo || "-"}</td>
+      <td>${item.customerId || "-"}</td>
+      <td>${item.name || "-"}</td>
+      <td>${item.mobile || "-"}</td>
+      <td>₹${item.monthlyAmount || 0}</td>
+      <td>${item.duration || 0} months</td>
+    </tr>
+  `).join("");
+}
+
+function loadAccounts() {
+  const search = document.getElementById("searchInput").value.trim();
+  const queryPart = search ? `?query=${encodeURIComponent(search)}` : "";
+
+  fetch(`/api/accounts${queryPart}`)
+    .then(async (response) => {
+      const result = await response.json();
+      if (!response.ok || result.status !== "success") {
+        throw new Error(result.message || "Failed to load accounts.");
+      }
+
+      renderAccounts(result.data || []);
+      setStatus(`Loaded ${result.data.length} account(s).`, false);
+    })
+    .catch((error) => {
+      renderAccounts([]);
+      setStatus(error.message, true);
+    });
+}
+
+loadAccounts();
+</script>
+
+</body>
+</html>

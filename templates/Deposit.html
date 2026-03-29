@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deposit Monthly Installment</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+
+body{
+background:#f4f6fb;
+padding:30px;
+}
+
+/* Card Container */
+
+.container{
+max-width:700px;
+margin:auto;
+background:white;
+padding:25px;
+border-radius:12px;
+box-shadow:0 10px 25px rgba(0,0,0,0.1);
+}
+
+h2{
+text-align:center;
+margin-bottom:20px;
+color:#1d2671;
+}
+
+/* Form Grid */
+
+.form-grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:15px;
+}
+
+.full{
+grid-column:span 2;
+}
+
+label{
+font-size:13px;
+font-weight:500;
+}
+
+input{
+width:100%;
+padding:8px;
+border-radius:6px;
+border:1px solid #ccc;
+outline:none;
+}
+
+/* Buttons */
+
+button{
+margin-top:20px;
+width:100%;
+padding:12px;
+border:none;
+border-radius:8px;
+background:linear-gradient(135deg,#1d2671,#c33764);
+color:white;
+font-size:15px;
+font-weight:600;
+cursor:pointer;
+}
+
+button:hover{
+opacity:0.9;
+}
+
+.search-btn{
+background:#0072ff;
+margin-top:5px;
+}
+
+.secondary-btn{
+background:#4a5568;
+margin-top:10px;
+}
+
+#statusMsg{
+margin-top:12px;
+font-weight:600;
+color:#1d2671;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>💰 Deposit Monthly Installment</h2>
+
+<div class="form-grid">
+
+<div class="full">
+<label>Account Number</label>
+<input type="text" id="accountNo" placeholder="Enter RD Account Number">
+<button class="search-btn" onclick="searchAccount()">Search Account</button>
+</div>
+
+<div>
+<label>Customer Name</label>
+<input type="text" id="customerName" readonly>
+</div>
+
+<div>
+<label>Agent ID</label>
+<input type="text" id="agentId" readonly>
+</div>
+
+<div>
+<label>Monthly Deposit Amount</label>
+<input type="number" id="monthlyAmount" readonly>
+</div>
+
+<div>
+<label>Installment Month</label>
+<input type="month" id="installmentMonth">
+</div>
+
+<div>
+<label>Deposit Date</label>
+<input type="date" id="depositDate">
+</div>
+
+<div>
+<label>Amount Paid</label>
+<input type="number" id="amountPaid">
+</div>
+
+<div>
+<label>Next Due Date</label>
+<input type="date" id="nextDueDate" readonly>
+</div>
+
+</div>
+
+<button onclick="depositInstallment()">Deposit Installment</button>
+<button class="secondary-btn" onclick="goToDashboard()">Back to Dashboard</button>
+
+<div id="statusMsg"></div>
+
+</div>
+
+<script>
+const DASHBOARD_ROUTE = "{{ url_for('dashboard') }}";
+let selectedAccount = null;
+
+function goToDashboard() {
+	window.location.href = DASHBOARD_ROUTE;
+}
+
+function setStatus(message, isError) {
+	const status = document.getElementById("statusMsg");
+	status.style.color = isError ? "#d64545" : "#1d2671";
+	status.textContent = message;
+}
+
+function searchAccount(){
+
+let acc=document.getElementById("accountNo").value;
+
+if(acc===""){
+setStatus("Enter Account Number", true);
+return;
+}
+
+fetch(`/api/accounts/${encodeURIComponent(acc)}`)
+	.then(async (response) => {
+		const result = await response.json();
+		if (!response.ok || result.status !== "success") {
+			throw new Error(result.message || "Account not found.");
+		}
+
+		selectedAccount = result.data;
+		document.getElementById("customerName").value = selectedAccount.name || "";
+		document.getElementById("agentId").value = selectedAccount.agentId || "";
+		document.getElementById("monthlyAmount").value = selectedAccount.monthlyAmount || "";
+		document.getElementById("amountPaid").value = selectedAccount.monthlyAmount || "";
+		setStatus("Account loaded successfully.", false);
+	})
+	.catch((error) => {
+		selectedAccount = null;
+		setStatus(error.message, true);
+	});
+
+}
+
+function depositInstallment(){
+if(!selectedAccount){
+setStatus("Search and load an account first.", true);
+return;
+}
+
+let installmentMonth=document.getElementById("installmentMonth").value;
+
+let depositDate=document.getElementById("depositDate").value;
+
+let amountPaid=parseFloat(document.getElementById("amountPaid").value || "0");
+
+if(depositDate===""){
+setStatus("Select Deposit Date", true);
+return;
+}
+
+if(installmentMonth===""){
+setStatus("Select Installment Month", true);
+return;
+}
+
+if(amountPaid<=0){
+setStatus("Enter valid Amount Paid", true);
+return;
+}
+
+let nextDate=new Date(depositDate);
+nextDate.setMonth(nextDate.getMonth()+1);
+
+document.getElementById("nextDueDate").value=
+nextDate.toISOString().split("T")[0];
+
+const updatedAccount = {
+	...selectedAccount,
+	installments: [
+		...(selectedAccount.installments || []),
+		{
+			month: installmentMonth,
+			depositDate: depositDate,
+			amount: amountPaid,
+			status: "Paid"
+		}
+	]
+};
+
+fetch(`/api/accounts/${encodeURIComponent(selectedAccount.accountNo)}`, {
+	method: "PUT",
+	headers: {
+		"Content-Type": "application/json"
+	},
+	body: JSON.stringify(updatedAccount)
+})
+	.then(async (response) => {
+		const result = await response.json();
+		if (!response.ok || result.status !== "success") {
+			throw new Error(result.message || "Failed to deposit installment.");
+		}
+
+		selectedAccount = result.data;
+		setStatus("Installment deposited successfully.", false);
+		alert("Installment deposited successfully.");
+	})
+	.catch((error) => {
+		setStatus(error.message, true);
+	});
+
+}
+
+</script>
+
+</body>
+</html>

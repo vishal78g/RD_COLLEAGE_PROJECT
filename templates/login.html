@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RD Account Manager - Agent Login</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #1d2671, #c33764);
+}
+
+
+.login-container {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(15px);
+  padding: 40px;
+  border-radius: 15px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  width: 360px;
+  color: white;
+}
+
+.login-container h2 {
+  text-align: center;
+  margin-bottom: 25px;
+  font-weight: 600;
+}
+
+
+.input-group {
+  margin-bottom: 15px;
+}
+
+.input-group label {
+  font-size: 14px;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  outline: none;
+}
+
+
+.forgot {
+  text-align: right;
+  font-size: 13px;
+  cursor: pointer;
+  color: #00c6ff;
+}
+
+.forgot:hover {
+  text-decoration: underline;
+}
+
+
+.login-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: #00c6ff;
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.login-btn:hover {
+  background: #0072ff;
+}
+
+
+#error-msg {
+  color: #ffdddd;
+  font-size: 13px;
+  margin-top: 10px;
+  text-align: center;
+}
+
+
+.footer-text {
+  text-align: center;
+  margin-top: 15px;
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  width: 300px;
+  text-align: center;
+}
+
+.modal-content h3 {
+  margin-bottom: 10px;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.modal-content button {
+  margin-top: 15px;
+  padding: 10px;
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  background: #1d2671;
+  color: white;
+  cursor: pointer;
+}
+
+.close {
+  margin-top: 10px;
+  font-size: 13px;
+  color: red;
+  cursor: pointer;
+}
+
+.logo {
+  width: 200px;
+  display: block;
+  margin: 0 auto 15px auto;
+  border-radius: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="login-container">
+	<img  class="logo" src="{{ url_for('static', filename='dop.png') }}" alt="DOP Logo">
+  <h2>RD Account Manager<br>Agent Login</h2>
+
+  <div class="input-group">
+    <label>Agent ID</label>
+    <input type="text" id="agentId" placeholder="Enter Agent ID">
+  </div>
+
+  <div class="input-group">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="Enter Password">
+  </div>
+
+  <div class="forgot" onclick="openModal()">Forgot Password?</div>
+
+  <button class="login-btn" onclick="login()">Login</button>
+
+  <p id="error-msg"></p>
+
+  <div class="footer-text">
+    © 2026 RD Account Manager System
+  </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div class="modal" id="forgotModal">
+  <div class="modal-content">
+    <h3>Reset Password</h3>
+    <p>Enter your Agent ID or Email</p>
+    <input type="text" id="resetInput" placeholder="Agent ID or Email">
+
+    <button onclick="resetPassword()">Send Reset Link</button>
+    <div class="close" onclick="closeModal()">Close</div>
+  </div>
+</div>
+
+<script>
+function login() {
+  const agentId = document.getElementById("agentId").value;
+  const password = document.getElementById("password").value;
+  const errorMsg = document.getElementById("error-msg");
+
+  // Basic client-side validation
+  if (agentId === "" || password === "") {
+    errorMsg.textContent = "Please enter Agent ID and Password.";
+    return;
+  }
+
+  // Clear previous errors and show status
+  errorMsg.style.color = "white";
+  errorMsg.textContent = "Logging in...";
+
+  // Prepare data for Flask (using FormData to match request.form)
+  const formData = new FormData();
+  formData.append('agentId', agentId);
+  formData.append('password', password);
+
+  fetch("{{ url_for('login') }}", {
+    method: 'POST',
+    body: formData
+	})
+	.then(response => response.json())
+	.then(data => {
+		if (data.status === 'success') {
+			// This is the line that actually moves the user to the new page
+			window.location.href = data.redirect; 
+		} else {
+			errorMsg.textContent = data.message;
+		}
+	})
+	.catch(error => {
+		errorMsg.textContent = "Server error. Please try again.";
+	});
+}
+
+// Modal functions
+function openModal() {
+  document.getElementById("forgotModal").style.display = "flex";
+}
+
+function closeModal() {
+  document.getElementById("forgotModal").style.display = "none";
+}
+
+function resetPassword() {
+  const value = document.getElementById("resetInput").value;
+  if (value === "") {
+    alert("Please enter Agent ID or Email");
+  } else {
+    alert("Password reset link sent to registered email (Demo)");
+    closeModal();
+  }
+}
+</script>
+
+</body>
+</html>
